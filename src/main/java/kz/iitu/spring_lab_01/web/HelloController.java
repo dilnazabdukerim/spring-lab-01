@@ -1,3 +1,4 @@
+// Lab 01: REST controller with hello/info/sum endpoints
 package kz.iitu.spring_lab_01.web;
 
 import org.springframework.beans.factory.annotation.Value;

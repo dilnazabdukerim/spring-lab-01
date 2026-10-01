@@ -26,7 +26,7 @@ public class CatalogController {
         return catalogService.findAll(limit);
     }
 
-    @DeleteMapping("/item/{id}")
+    @GetMapping("/item/{id}")
     public String remove(@PathVariable long id) {
         return catalogService.remove(id);
     }

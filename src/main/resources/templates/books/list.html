@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${title}">Catalogue</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<h1 th:text="${title}">Catalogue</h1>
+
+<!-- Вывод flash-сообщения после добавления книги (PRG паттерн) -->
+<p th:if="${message}" class="flash" th:text="${message}" style="color: green; font-weight: bold;"></p>
+
+<!-- Форма для добавления книги через POST-запрос -->
+<form action="#" th:action="@{/books}" method="post" style="margin-bottom: 20px;">
+    <input type="text" name="title" placeholder="Title" required>
+    <input type="text" name="author" placeholder="Author" required>
+    <input type="number" name="year" placeholder="Year" required>
+    <button type="submit">Add Book</button>
+</form>
+
+<!-- Таблица со списком книг -->
+<table>
+    <tr>
+        <th>#</th>
+        <th>Title</th>
+        <th>Author</th>
+        <th>Year</th>
+    </tr>
+    <tr th:each="book : ${books}">
+        <td th:text="${book.id}">1</td>
+        <td th:text="${book.title}">Title</td>
+        <td th:text="${book.author}">Author</td>
+        <td th:text="${book.year}">2020</td>
+    </tr>
+</table>
+</body>
+</html>

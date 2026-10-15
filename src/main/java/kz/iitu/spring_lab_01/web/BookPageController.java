@@ -13,10 +13,22 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @RequestMapping("/books")
 public class BookPageController {
-    // Временный метод для проверки `@ControllerAdvice`
+
+    private final BookService bookService;
+
+    public BookPageController(BookService bookService) {
+        this.bookService = bookService;
+    }
+
     @GetMapping("/test-error")
     public String testError() {
         throw new BookNotFoundException("Book with id 999 was not found");
+    }
+
+    @GetMapping
+    public String index(Model model) {
+        model.addAttribute("books", bookService.findAll());
+        return "books/list";
     }
 
     @GetMapping("/new")
@@ -27,17 +39,24 @@ public class BookPageController {
     }
 
     @PostMapping
-    public String create(@Valid @ModelAttribute("form") BookForm form,
-                         BindingResult binding,
-                         Model model,
-                         RedirectAttributes redirect) {
+    public String create(
+            @Valid @ModelAttribute("form") BookForm form,
+            BindingResult binding,
+            Model model,
+            RedirectAttributes redirect) {
 
         if (binding.hasErrors()) {
             model.addAttribute("genres", Genre.values());
             return "books/form";
         }
 
-        redirect.addFlashAttribute("message", "Book «" + form.getTitle() + "» has been added");
+        Book saved = bookService.create(form);
+
+        redirect.addFlashAttribute(
+                "message",
+                "Book \"" + saved.getTitle() + "\" has been added"
+        );
+
         return "redirect:/books";
     }
 }

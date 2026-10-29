@@ -3,6 +3,8 @@ package kz.iitu.spring_lab_01.web;
 import kz.iitu.spring_lab_01.domain.Genre;
 import kz.iitu.spring_lab_01.entity.Book;
 import kz.iitu.spring_lab_01.service.BookService;
+
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +13,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/books")
@@ -18,15 +21,20 @@ public class BookApiController {
 
     private final BookService bookService;
 
+    private static final Set<String> ALLOWED_SORT_FIELDS =
+            Set.of("id", "title", "year", "genre", "createdAt");
+
     public BookApiController(BookService bookService) {
         this.bookService = bookService;
     }
 
-    // Task 4.1: paginated collection endpoint
+    // Task 4.1: pagination and sorting
     @GetMapping
     public Page<Book> findAll(
             @RequestParam(required = false) Genre genre,
-            @PageableDefault(size = 5, sort = "title") Pageable pageable
+            @ParameterObject
+            @PageableDefault(size = 5, sort = "title")
+            Pageable pageable
     ) {
         if (genre != null) {
             return bookService.findByGenre(genre, pageable);
@@ -90,7 +98,7 @@ public class BookApiController {
         return bookService.findActiveBooksByGenre(genre);
     }
 
-    // Existing pagination endpoint
+    // Additional pagination endpoint with validated sorting
     @GetMapping("/page")
     public Page<Book> findAllPage(
             @RequestParam(defaultValue = "0") int page,
@@ -110,11 +118,31 @@ public class BookApiController {
             );
         }
 
-        Sort sort = direction.equalsIgnoreCase("desc")
-                ? Sort.by(sortBy).descending()
-                : Sort.by(sortBy).ascending();
+        // Only allow known entity properties
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            throw new IllegalArgumentException(
+                    "Invalid sort field. Allowed fields: "
+                            + ALLOWED_SORT_FIELDS
+            );
+        }
 
-        Pageable pageable = PageRequest.of(page, size, sort);
+        Sort.Direction sortDirection;
+
+        if ("asc".equalsIgnoreCase(direction)) {
+            sortDirection = Sort.Direction.ASC;
+        } else if ("desc".equalsIgnoreCase(direction)) {
+            sortDirection = Sort.Direction.DESC;
+        } else {
+            throw new IllegalArgumentException(
+                    "Direction must be asc or desc"
+            );
+        }
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(sortDirection, sortBy)
+        );
 
         return bookService.findAll(pageable);
     }

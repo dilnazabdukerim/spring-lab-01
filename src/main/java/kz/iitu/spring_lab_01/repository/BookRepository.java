@@ -1,5 +1,8 @@
 package kz.iitu.spring_lab_01.repository;
 
+import java.util.List;
+import java.util.Optional;
+
 import kz.iitu.spring_lab_01.domain.Genre;
 import kz.iitu.spring_lab_01.entity.Book;
 
@@ -11,8 +14,6 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
-
 public interface BookRepository extends JpaRepository<Book, Long> {
 
     // Find books by author name
@@ -22,6 +23,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     List<Book> findByGenre(Genre genre);
 
     // Find books by genre with pagination
+    @EntityGraph(attributePaths = {"author", "tags"})
     Page<Book> findByGenre(Genre genre, Pageable pageable);
 
     // Find books that are not archived
@@ -31,7 +33,10 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     List<Book> findByTitleContainingIgnoreCase(String title);
 
     // Find books between years, ordered by year descending
-    List<Book> findByYearBetweenOrderByYearDesc(int startYear, int endYear);
+    List<Book> findByYearBetweenOrderByYearDesc(
+            int startYear,
+            int endYear
+    );
 
     // Find top 3 newest books by genre
     List<Book> findTop3ByGenreOrderByYearDesc(Genre genre);
@@ -39,23 +44,19 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     // Count books by author name
     long countByAuthor_NameIgnoreCase(String authorName);
 
-
     // Find all books with authors and tags loaded
     @EntityGraph(attributePaths = {"author", "tags"})
     @Query("SELECT DISTINCT b FROM Book b")
     List<Book> findAllWithAuthors();
-
 
     // Find active books with authors and tags loaded
     @EntityGraph(attributePaths = {"author", "tags"})
     @Query("SELECT DISTINCT b FROM Book b WHERE b.archived = false")
     List<Book> findActiveBooksWithDetails();
 
-
-    // Task 3.4: Find all books without fetching their authors in advance
+    // Find all books without fetching their authors in advance
     @Query("SELECT b FROM Book b")
     List<Book> findAllWithoutFetch();
-
 
     // Find books by author name using JPQL
     @EntityGraph(attributePaths = {"author", "tags"})
@@ -69,7 +70,6 @@ public interface BookRepository extends JpaRepository<Book, Long> {
             @Param("authorName") String authorName
     );
 
-
     // Find active books by genre
     @Query("""
            SELECT b
@@ -80,7 +80,6 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     List<Book> findActiveBooksByGenre(
             @Param("genre") Genre genre
     );
-
 
     // Find books by genre and year range
     @Query("""
@@ -96,7 +95,6 @@ public interface BookRepository extends JpaRepository<Book, Long> {
             @Param("endYear") int endYear
     );
 
-
     // Archive a book by ID
     @Modifying(clearAutomatically = true)
     @Query("""
@@ -104,10 +102,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
            SET b.archived = true
            WHERE b.id = :id
            """)
-    int archiveBook(
-            @Param("id") Long id
-    );
-
+    int archiveBook(@Param("id") Long id);
 
     // Archive all books published in a specific year
     @Modifying(clearAutomatically = true)
@@ -116,17 +111,18 @@ public interface BookRepository extends JpaRepository<Book, Long> {
            SET b.archived = true
            WHERE b.year = :year
            """)
-    int archiveBooksByYear(
-            @Param("year") int year
-    );
+    int archiveBooksByYear(@Param("year") int year);
 
-
-    // Task 4: Pagination and sorting
-    // Use a simple query so Spring Data can apply sorting and pagination
+    // Find all books with authors and tags using pagination
+    @EntityGraph(attributePaths = {"author", "tags"})
     @Query(
-            value = "SELECT b FROM Book b",
+            value = "SELECT DISTINCT b FROM Book b",
             countQuery = "SELECT COUNT(b) FROM Book b"
     )
     Page<Book> findAllWithDetails(Pageable pageable);
 
+    // Find a book by ID with its author and tags loaded
+    @EntityGraph(attributePaths = {"author", "tags"})
+    @Query("SELECT DISTINCT b FROM Book b WHERE b.id = :id")
+    Optional<Book> findByIdWithDetails(@Param("id") Long id);
 }

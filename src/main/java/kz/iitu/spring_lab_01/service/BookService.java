@@ -40,21 +40,25 @@ public class BookService {
         return bookRepository.findAllWithAuthors();
     }
 
-    // Получение книг с пагинацией
+
+    // Получение книг с пагинацией и сортировкой
     @Transactional(readOnly = true)
     public Page<Book> findAll(Pageable pageable) {
-        return bookRepository.findAllWithDetails(pageable);
+        return bookRepository.findAll(pageable);
     }
 
-    // Получение книги по ID
+
+
+    // Получение книги по ID с загрузкой автора и тегов
     @Transactional(readOnly = true)
     public Book findById(Long id) {
-        return bookRepository.findById(id)
+        return bookRepository.findByIdWithDetails(id)
                 .orElseThrow(() ->
                         new RuntimeException(
                                 "Book not found with id: " + id
                         ));
     }
+
 
     // Создание книги
     public Book create(Book book) {
